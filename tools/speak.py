@@ -195,6 +195,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--volume", type=int, default=None)
     parser.add_argument("--timeout", type=float, default=5.0)
     parser.add_argument("--discover-timeout", type=float, default=3.0)
+    # Seconds to wait after Play before sending Stop.  Some renderers (the
+    # Xiaomi DLNA speaker among them) stay in PLAYING after the track ends and
+    # loop the phrase forever; an explicit Stop is the only reliable reset.
+    # Set 0 to disable (play-and-leave, the pre-fix behaviour).
+    parser.add_argument("--stop-after", type=float, default=2.5)
     args = parser.parse_args(argv)
 
     try:
@@ -259,6 +264,21 @@ def main(argv: list[str] | None = None) -> int:
                 f"<DesiredVolume>{volume}</DesiredVolume>",
                 args.timeout,
             )
+        if args.stop_after > 0:
+            # Wait for the phrase to finish, then reset the renderer so it
+            # does not loop.  Stop is best-effort: a failure here must not
+            # turn a successful playback into a reported error.
+            time.sleep(args.stop_after)
+            try:
+                _post_soap(
+                    av_control,
+                    AV_TRANSPORT,
+                    "Stop",
+                    "<InstanceID>0</InstanceID>",
+                    args.timeout,
+                )
+            except (OSError, urllib.error.URLError) as exc:
+                print(f"speak warning: Stop failed: {exc}", file=sys.stderr)
     except (OSError, urllib.error.URLError) as exc:
         print(f"speak error: {exc}", file=sys.stderr)
         return 1
