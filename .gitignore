@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+data/
+models/
+*.sqlite3
+.env
+.ruff_cache/
+service.env
+logs/
+alerts/
+.DS_Store
+*.mp3
+*.pth
+*.ckpt

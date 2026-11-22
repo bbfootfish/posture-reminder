@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    image: posture-reminder:0.1
+    container_name: posture-reminder
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 20s
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: Asia/Shanghai
+      POSTURE_RTSP_URL: "${POSTURE_RTSP_URL:-}"
+      POSTURE_MODEL_PATH: /app/models/pose_landmarker_full.task
+      POSTURE_DATA_DIR: /app/data
+      POSTURE_MEDIA_BASE_URL: "${POSTURE_MEDIA_BASE_URL:-http://192.168.2.130:8090}"
+      SPEAK_CMD: "${SPEAK_CMD:-}"
+      WORK_HOURS: "${WORK_HOURS:-16:00-21:00}"
+    volumes:
+      - posture-data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  posture-data:
